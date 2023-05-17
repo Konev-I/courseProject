@@ -1,0 +1,12 @@
+[Unit]
+Description=Course project service by Konev Ivan
+After=network.target
+
+[Service]
+ExecStart=/usr/local/sbin/PICOFoxweb 8080
+KillMode=process
+User=labuser
+Group=labuser
+
+[Install]
+WantedBy=multi-user.target
