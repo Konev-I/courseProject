@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 // Client request
 extern char *method, // "GET" or "POST"
@@ -14,7 +15,7 @@ extern char *method, // "GET" or "POST"
 extern int payload_size;
 
 // Server control functions
-void serve_forever(const char *PORT);
+void serve_forever(const char *PORT, FILE* fileLogs);
 
 char *request_header(const char *name);
 

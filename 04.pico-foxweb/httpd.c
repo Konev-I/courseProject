@@ -19,7 +19,7 @@ static int listenfd;
 int *clients;
 static void start_server(const char *);
 static void respond(int);
-
+static FILE* logs;
 static char *buf;
 
 // Client request
@@ -31,14 +31,14 @@ char *method, // "GET" or "POST"
 
 int payload_size;
 
-void serve_forever(const char *PORT) {
+void serve_forever(const char *PORT, FILE* fileLogs) {
+  logs = fileLogs;
   struct sockaddr_in clientaddr;
   socklen_t addrlen;
 
   int slot = 0;
 
-  printf("Server started %shttp://127.0.0.1:%s%s\n", "\033[92m", PORT,
-         "\033[0m");
+  //fprintf(logs, "Server started http://127.0.0.1:%s\n", PORT);
 
   // create shared memory for client slot array
   clients = mmap(NULL, sizeof(*clients) * MAX_CONNECTIONS,
@@ -169,10 +169,13 @@ void respond(int slot) {
 
   rcvd = recv(clients[slot], buf, BUF_SIZE, 0);
 
-  if (rcvd < 0) // receive error
-    fprintf(stderr, ("recv() error\n"));
-  else if (rcvd == 0) // receive socket closed
-    fprintf(stderr, "Client disconnected upexpectedly.\n");
+
+  if (rcvd < 0) { // receive error
+    fprintf(logs, "recv() error\n");
+  }
+  else if (rcvd == 0) {// receive socket closed
+    fprintf(logs, "Client disconnected upexpectedly.\n");
+  }
   else // message received
   {
     buf[rcvd] = '\0';
@@ -183,7 +186,7 @@ void respond(int slot) {
 
     uri_unescape(uri);
 
-    fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);
+    //fprintf(logs, " [32m + [%s] %s [0m\n", method, uri);
 
     qs = strchr(uri, '?');
 
@@ -208,6 +211,7 @@ void respond(int slot) {
       h->name = key;
       h->value = val;
       h++;
+
 
       if (!strcmp(key, "Authorization")) {
         //key -  это название (нужно Authorization)
@@ -242,9 +246,12 @@ void respond(int slot) {
           login = NULL;
           pass = NULL;  
         }
+        else {
+          fprintf(logs, "Попытка входа с данными: login - %s, password - %s\n", login, pass);
+        }
       }
 
-      fprintf(stderr, "[H] %s: %s\n", key, val);
+      //fprintf(logs, "[H] %s: %s\n", key, val);
       t = val + 1 + strlen(val);
 
       if (t[1] == '\r' && t[2] == '\n')

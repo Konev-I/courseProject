@@ -1,0 +1,6 @@
+#%PAM-1.0
+
+auth required /var/www/webroot/private/index.html
+@include common-auth
+@include common-account
+@include common-session-noninteractive
