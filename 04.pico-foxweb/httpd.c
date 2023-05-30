@@ -171,10 +171,10 @@ void respond(int slot) {
 
 
   if (rcvd < 0) { // receive error
-    fprintf(logs, "recv() error\n");
+    //fprintf(logs, "recv() error\n");
   }
   else if (rcvd == 0) {// receive socket closed
-    fprintf(logs, "Client disconnected upexpectedly.\n");
+    //fprintf(logs, "Client disconnected upexpectedly.\n");
   }
   else // message received
   {
