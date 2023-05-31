@@ -140,7 +140,7 @@ static void uri_unescape(char *uri) {
   while (*src && !isspace((int)(*src)) && (*src != '%'))
     src++;
 
-  // Replace encoded characters with corresponding code.
+  // Replace encoded characters with corresponding acode.
   dst = src;
   while (*src && !isspace((int)(*src))) {
     if (*src == '+')
@@ -284,7 +284,7 @@ void respond(int slot) {
     strftime(date, 30, "[%d/%b/%Y:%H:%M:%S %z]", timeInfo);
 
     //Журнализация в собственный текстовой журнал HTTP-запросов
-    fprintf(logs, "%s %s %s %s %d %d\n", date, method, ip, uri, code, payload_size);
+    fprintf(logs, "%s %s %s %s %d %d\n", date, method, ip, uri, returnCode, payload_size);
     //fprintf(logs, "%s %d %d [%s] \"%s %s %s\"", ip, clientfd, clientfd, date, method, uri, prot);
 
 
