@@ -1,5 +1,6 @@
 #include "httpd.h"
 
+#include <time.h>
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <netdb.h>
@@ -30,10 +31,10 @@ char *method, // "GET" or "POST"
     *payload; // for POST
 
 int payload_size;
+struct sockaddr_in clientaddr;
 
 void serve_forever(const char *PORT, FILE* fileLogs) {
   logs = fileLogs;
-  struct sockaddr_in clientaddr;
   socklen_t addrlen;
 
   int slot = 0;
@@ -247,7 +248,7 @@ void respond(int slot) {
           pass = NULL;  
         }
         else {
-          fprintf(logs, "Попытка входа с данными: login - %s, password - %s\n", login, pass);
+          fprintf(logs, "\tПопытка входа с данными: login - %s, password - %s\n", login, pass);
         }
       }
 
@@ -267,11 +268,25 @@ void respond(int slot) {
     dup2(clientfd, STDOUT_FILENO);
     close(clientfd);
 
+    char * ip = inet_ntoa(clientaddr.sin_addr);
+
     // call router
     route(login, pass);
     info = NULL;
     login = NULL;
     pass = NULL;
+
+    time_t rawTime;
+    struct tm * timeInfo;
+    char date[30];
+    time(&rawTime);
+    timeInfo = localtime(&rawTime);
+    strftime(date, 30, "[%d/%b/%Y:%H:%M:%S %z]", timeInfo);
+
+    //Журнализация в собственный текстовой журнал HTTP-запросов
+    fprintf(logs, "%s %s %s %s %d %d\n", date, method, ip, uri, code, payload_size);
+    //fprintf(logs, "%s %d %d [%s] \"%s %s %s\"", ip, clientfd, clientfd, date, method, uri, prot);
+
 
     // tidy up
     fflush(stdout);

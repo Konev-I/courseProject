@@ -5,9 +5,8 @@
 
 #define CHUNK_SIZE 1024 // read 1024 bytes at a time
 
-// Public directory settingsa
-//#define PUBLIC_DIR "/var/www/webroot"
-#define PUBLIC_DIR "/home/ivan/courseProject/04.pico-foxweb/webroot"
+// Public directory settings
+#define PUBLIC_DIR "/var/www/webroot"
 #define INDEX_HTML "/index.html"
 #define NOT_FOUND_HTML "/404.html"
 #define AUTH_PATH "/private"
@@ -78,7 +77,7 @@ void route(char *login, char *pass) {
     sprintf(index_html, "%s%s", PUBLIC_DIR, INDEX_HTML);
     HTTP_200;
 
-    fprintf(logs, "GET запрос к %s\n", INDEX_HTML);
+    //fprintf(logs, "GET запрос к %s\n", INDEX_HTML);
 
     if (file_exists(index_html)) {
 
@@ -94,7 +93,7 @@ void route(char *login, char *pass) {
 
     header_t *h = request_headers();
 
-    fprintf(logs, "GET запрос к / \n");
+    //fprintf(logs, "GET запрос к / \n");
 
     while (h->name) {
       printf("%s: %s\n", h->name, h->value);
@@ -107,7 +106,7 @@ void route(char *login, char *pass) {
     printf("Wow, seems that you POSTed %d bytes.\n", payload_size);
     printf("Fetch the data using `payload` variable.\n");
 
-    fprintf(logs, "POST запрос к / \n");
+    //fprintf(logs, "POST запрос к / \n");
 
     if (payload_size > 0)
       printf("Request body: %s", payload);
@@ -117,7 +116,7 @@ void route(char *login, char *pass) {
     char file_name[255];
     sprintf(file_name, "%s%s", PUBLIC_DIR, uri);
 
-    fprintf(logs, "GET запрос к %s\n", uri);
+    //fprintf(logs, "GET запрос к %s\n", uri);
 
     char *tmpStr;
     char isPrivate = 'n';
@@ -135,31 +134,33 @@ void route(char *login, char *pass) {
 
     if (isPrivate == 'y') {
       if (login == NULL || pass == NULL) {
-        fprintf(logs, "Запрос к приватной странице %s, запрашиваем данные для входа\n", file_name);
+        fprintf(logs, "\tЗапрос к приватной странице %s, запрашиваем данные для входа\n", file_name);
         HTTP_401;
       }
       else {
-        fprintf(logs, "Аутентификация в PAM\n");
+        fprintf(logs, "\tАутентификация в PAM\n");
         //struct pam_conv conv = {misc_conv, NULL};
         struct pam_conv conv = {&pam_conversation, (void *) pass};
           pam_handle_t *handle;
           int startResult, authResult;
           startResult = pam_start(SERVICE, login, &conv, &handle); 
           if (startResult != PAM_SUCCESS) {
-            fprintf(logs, "ОШИБКА: Не запустился PAM сервис:\n");
-            fprintf(logs, "Start -- %s (%d)\n",pam_strerror(handle,startResult),startResult);
+            fprintf(logs, "\tОШИБКА: Не запустился PAM сервис:\n");
+            fprintf(logs, "\tStart -- %s (%d)\n",pam_strerror(handle,startResult),startResult);
+            code = 403;
             return;
           }
           
           authResult = pam_authenticate(handle, PAM_SILENT | PAM_DISALLOW_NULL_AUTHTOK);
           if (authResult != PAM_SUCCESS) {
-            fprintf(logs, "ОШИБКА: Не сработала PAM аутентификация:\n");
-            fprintf(logs, "AUTH -- %s (%d)\n",pam_strerror(handle,authResult),authResult);
+            fprintf(logs, "\tОШИБКА: Не сработала PAM аутентификация:\n");
+            fprintf(logs, "\tAUTH -- %s (%d)\n",pam_strerror(handle,authResult),authResult);
+            code = 403;
             return;
           }
           pam_end(handle, authResult);
 
-          fprintf(logs, "Пользователю: %s доступ разрешён\n", login);
+          fprintf(logs, "\tПользователю: %s доступ разрешён\n", login);
           if (file_exists(file_name)) {
             HTTP_200;
             read_file(file_name);

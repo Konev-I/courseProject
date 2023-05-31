@@ -25,6 +25,7 @@ typedef struct {
 static header_t reqhdr[17] = {{"\0", "\0"}};
 header_t *request_headers(void);
 
+int code;
 // user shall implement this function
 
 void route();
@@ -32,10 +33,10 @@ void route();
 // Response
 #define RESPONSE_PROTOCOL "HTTP/1.1"
 
-#define HTTP_200 printf("%s 200 OK\n\n", RESPONSE_PROTOCOL)
-#define HTTP_201 printf("%s 201 Created\n\n", RESPONSE_PROTOCOL)
-#define HTTP_401 printf("HTTP/1.0 401 Unauthorized\nWWW-Authenticate: Basic realm=\"Realm\"\n")
-#define HTTP_404 printf("%s 404 Not found\n\n", RESPONSE_PROTOCOL)
+#define HTTP_200 printf("%s 200 OK\n\n", RESPONSE_PROTOCOL); code = 200;
+#define HTTP_201 printf("%s 201 Created\n\n", RESPONSE_PROTOCOL); code = 201;
+#define HTTP_401 printf("HTTP/1.0 401 Unauthorized\nWWW-Authenticate: Basic realm=\"Realm\"\n"); code = 401;
+#define HTTP_404 printf("%s 404 Not found\n\n", RESPONSE_PROTOCOL); code = 404;
 #define HTTP_500 printf("%s 500 Internal Server Error\n\n", RESPONSE_PROTOCOL)
 
 // some interesting macro for `route()`
