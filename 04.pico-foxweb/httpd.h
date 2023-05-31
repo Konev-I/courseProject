@@ -27,7 +27,7 @@ header_t *request_headers(void);
 
 // user shall implement this function
 
-void route();
+int route(char *login, char *pass);
 
 // Response
 #define RESPONSE_PROTOCOL "HTTP/1.1"
