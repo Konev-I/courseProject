@@ -69,7 +69,9 @@ int read_file(const char *file_name) {
   return err;
 }
 
-void route(char *login, char *pass) {
+int route(char *login, char *pass) {
+  int retValue = 0;
+
   ROUTE_START()
 
   GET("/") {
@@ -147,16 +149,16 @@ void route(char *login, char *pass) {
           if (startResult != PAM_SUCCESS) {
             fprintf(logs, "\tОШИБКА: Не запустился PAM сервис:\n");
             fprintf(logs, "\tStart -- %s (%d)\n",pam_strerror(handle,startResult),startResult);
-            //returnCode = 403;
-            return;
+            retValue = 403;
+            return retValue;
           }
           
           authResult = pam_authenticate(handle, PAM_SILENT | PAM_DISALLOW_NULL_AUTHTOK);
           if (authResult != PAM_SUCCESS) {
             fprintf(logs, "\tОШИБКА: Не сработала PAM аутентификация:\n");
             fprintf(logs, "\tAUTH -- %s (%d)\n",pam_strerror(handle,authResult),authResult);
-            //returnCode = 403;
-            return;
+            retValue = 403;
+            return retValue;
           }
           pam_end(handle, authResult);
 
@@ -186,4 +188,5 @@ void route(char *login, char *pass) {
   }
 
   ROUTE_END()
+  return retValue;
 }

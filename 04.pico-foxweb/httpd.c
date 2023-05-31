@@ -271,7 +271,7 @@ void respond(int slot) {
     char * ip = inet_ntoa(clientaddr.sin_addr);
 
     // call router
-    route(login, pass);
+    int returnCode = route(login, pass);
     info = NULL;
     login = NULL;
     pass = NULL;
