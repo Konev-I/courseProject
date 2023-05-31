@@ -147,7 +147,7 @@ void route(char *login, char *pass) {
           if (startResult != PAM_SUCCESS) {
             fprintf(logs, "\tОШИБКА: Не запустился PAM сервис:\n");
             fprintf(logs, "\tStart -- %s (%d)\n",pam_strerror(handle,startResult),startResult);
-            returnCode = 403;
+            //returnCode = 403;
             return;
           }
           
@@ -155,7 +155,7 @@ void route(char *login, char *pass) {
           if (authResult != PAM_SUCCESS) {
             fprintf(logs, "\tОШИБКА: Не сработала PAM аутентификация:\n");
             fprintf(logs, "\tAUTH -- %s (%d)\n",pam_strerror(handle,authResult),authResult);
-            returnCode = 403;
+            //returnCode = 403;
             return;
           }
           pam_end(handle, authResult);
