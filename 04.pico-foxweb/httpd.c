@@ -1,6 +1,5 @@
 #include "httpd.h"
 
-#include <time.h>
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <netdb.h>
@@ -20,7 +19,7 @@ static int listenfd;
 int *clients;
 static void start_server(const char *);
 static void respond(int);
-static FILE* logs;
+
 static char *buf;
 
 // Client request
@@ -31,15 +30,15 @@ char *method, // "GET" or "POST"
     *payload; // for POST
 
 int payload_size;
-struct sockaddr_in clientaddr;
 
-void serve_forever(const char *PORT, FILE* fileLogs) {
-  logs = fileLogs;
+struct sockaddr_in clientaddr;
+void serve_forever(const char *PORT) {
+  struct sockaddr_in clientaddr;
   socklen_t addrlen;
 
   int slot = 0;
 
-  //fprintf(logs, "Server started http://127.0.0.1:%s\n", PORT);
+  //printf("Server started %shttp://127.0.0.1:%s%s\n", "\033[92m", PORT,"\033[0m");
 
   // create shared memory for client slot array
   clients = mmap(NULL, sizeof(*clients) * MAX_CONNECTIONS,
@@ -140,7 +139,7 @@ static void uri_unescape(char *uri) {
   while (*src && !isspace((int)(*src)) && (*src != '%'))
     src++;
 
-  // Replace encoded characters with corresponding acode.
+  // Replace encoded characters with corresponding code.
   dst = src;
   while (*src && !isspace((int)(*src))) {
     if (*src == '+')
@@ -162,23 +161,24 @@ static void uri_unescape(char *uri) {
 void respond(int slot) {
   int rcvd;
 
-  buf = malloc(BUF_SIZE);
+  FILE* logs = fopen("/var/log/myLogs/myLog.log", "a");
 
   char *info = NULL; 
   char *login = NULL;
   char *pass = NULL;
 
+  buf = malloc(BUF_SIZE);
   rcvd = recv(clients[slot], buf, BUF_SIZE, 0);
 
-
-  if (rcvd < 0) { // receive error
-    //fprintf(logs, "recv() error\n");
+  if (rcvd < 0) {// receive error
+    //fprintf(stderr, ("recv() error\n"));
   }
   else if (rcvd == 0) {// receive socket closed
-    //fprintf(logs, "Client disconnected upexpectedly.\n");
+    //fprintf(stderr, "Client disconnected upexpectedly.\n");
   }
   else // message received
   {
+    char* log  = malloc(1024);
     buf[rcvd] = '\0';
 
     method = strtok(buf, " \t\r\n");
@@ -187,7 +187,7 @@ void respond(int slot) {
 
     uri_unescape(uri);
 
-    //fprintf(logs, " [32m + [%s] %s [0m\n", method, uri);
+    //fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);
 
     qs = strchr(uri, '?');
 
@@ -212,7 +212,7 @@ void respond(int slot) {
       h->name = key;
       h->value = val;
       h++;
-
+      //fprintf(stderr, "[H] %s: %s\n", key, val);
 
       if (!strcmp(key, "Authorization")) {
         //key -  это название (нужно Authorization)
@@ -247,14 +247,10 @@ void respond(int slot) {
           login = NULL;
           pass = NULL;  
         }
-        else {
-          fprintf(logs, "\tПопытка входа с данными: login - %s, password - %s\n", login, pass);
-        }
       }
 
-      //fprintf(logs, "[H] %s: %s\n", key, val);
-      t = val + 1 + strlen(val);
 
+      t = val + 1 + strlen(val);
       if (t[1] == '\r' && t[2] == '\n')
         break;
     }
@@ -268,25 +264,19 @@ void respond(int slot) {
     dup2(clientfd, STDOUT_FILENO);
     close(clientfd);
 
-    char * ip = inet_ntoa(clientaddr.sin_addr);
+    fclose(logs);
+
+    // socklen_t addrlen = sizeof(clientaddr);
+    // clients[slot] = accept(listenfd, (struct sockaddr *)&clientaddr, &addrlen);
+    // char * ip = inet_ntoa(clientaddr.sin_addr);
 
     // call router
     int returnCode = route(login, pass);
-    info = NULL;
-    login = NULL;
-    pass = NULL;
 
-    time_t rawTime;
-    struct tm * timeInfo;
-    char date[30];
-    time(&rawTime);
-    timeInfo = localtime(&rawTime);
-    strftime(date, 30, "[%d/%b/%Y:%H:%M:%S %z]", timeInfo);
-
+    logs = fopen("/var/log/myLogs/myLog.log", "a");
     //Журнализация в собственный текстовой журнал HTTP-запросов
-    fprintf(logs, "%s %s %s %s %d %d\n", date, method, ip, uri, returnCode, payload_size);
-    //fprintf(logs, "%s %d %d [%s] \"%s %s %s\"", ip, clientfd, clientfd, date, method, uri, prot);
-
+    fprintf(logs, "%s %s %d\n", method, uri, returnCode);
+    fclose(logs);
 
     // tidy up
     fflush(stdout);

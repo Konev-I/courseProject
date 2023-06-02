@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 
 // Client request
 extern char *method, // "GET" or "POST"
@@ -15,7 +14,7 @@ extern char *method, // "GET" or "POST"
 extern int payload_size;
 
 // Server control functions
-void serve_forever(const char *PORT, FILE* fileLogs);
+void serve_forever(const char *PORT);
 
 char *request_header(const char *name);
 
@@ -32,10 +31,10 @@ int route(char *login, char *pass);
 // Response
 #define RESPONSE_PROTOCOL "HTTP/1.1"
 
-#define HTTP_200 printf("%s 200 OK\n\n", RESPONSE_PROTOCOL); retValue = 200;
-#define HTTP_201 printf("%s 201 Created\n\n", RESPONSE_PROTOCOL); retValue = 201;
-#define HTTP_401 printf("HTTP/1.0 401 Unauthorized\nWWW-Authenticate: Basic realm=\"Realm\"\n"); retValue = 401;
-#define HTTP_404 printf("%s 404 Not found\n\n", RESPONSE_PROTOCOL); retValue = 404;
+#define HTTP_200 printf("%s 200 OK\n\n", RESPONSE_PROTOCOL)
+#define HTTP_201 printf("%s 201 Created\n\n", RESPONSE_PROTOCOL)
+#define HTTP_404 printf("%s 404 Not found\n\n", RESPONSE_PROTOCOL)
+#define HTTP_401 printf("HTTP/1.0 401 Unauthorized\nWWW-Authenticate: Basic realm=\"Realm\"\n")
 #define HTTP_500 printf("%s 500 Internal Server Error\n\n", RESPONSE_PROTOCOL)
 
 // some interesting macro for `route()`
