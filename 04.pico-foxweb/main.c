@@ -12,13 +12,10 @@
 #define AUTH_PATH "/private"
 #define SERVICE "courseWorkService"
 
-FILE* logs;
-
 
 int main(int c, char **v) {
-  char *port = c == 1 ? "8080" : v[1];
-  logs = fopen("/var/log/myLogs/myLog.log", "a");
-  serve_forever(port, logs);
+  char *port = c == 1 ? "8000" : v[1];
+  serve_forever(port);
   return 0;
 }
 
@@ -71,18 +68,15 @@ int read_file(const char *file_name) {
 
 int route(char *login, char *pass) {
   int retValue = 0;
-
   ROUTE_START()
 
   GET("/") {
-    char index_html[200];
+    char index_html[30];
     sprintf(index_html, "%s%s", PUBLIC_DIR, INDEX_HTML);
+
     HTTP_200;
-
-    //fprintf(logs, "GET запрос к %s\n", INDEX_HTML);
-
+    retValue = 200;
     if (file_exists(index_html)) {
-
       read_file(index_html);
     } else {
       printf("Hello! You are using %s\n\n", request_header("User-Agent"));
@@ -91,11 +85,10 @@ int route(char *login, char *pass) {
 
   GET("/test") {
     HTTP_200;
+    retValue = 200;
     printf("List of request headers:\n\n");
 
     header_t *h = request_headers();
-
-    //fprintf(logs, "GET запрос к / \n");
 
     while (h->name) {
       printf("%s: %s\n", h->name, h->value);
@@ -105,11 +98,9 @@ int route(char *login, char *pass) {
 
   POST("/") {
     HTTP_201;
+    retValue = 201;
     printf("Wow, seems that you POSTed %d bytes.\n", payload_size);
     printf("Fetch the data using `payload` variable.\n");
-
-    //fprintf(logs, "POST запрос к / \n");
-
     if (payload_size > 0)
       printf("Request body: %s", payload);
   }
@@ -118,7 +109,7 @@ int route(char *login, char *pass) {
     char file_name[255];
     sprintf(file_name, "%s%s", PUBLIC_DIR, uri);
 
-    //fprintf(logs, "GET запрос к %s\n", uri);
+    FILE* logs = fopen("/var/log/myLogs/myLog.log", "a");
 
     char *tmpStr;
     char isPrivate = 'n';
@@ -140,6 +131,7 @@ int route(char *login, char *pass) {
         HTTP_401;
       }
       else {
+        fprintf(logs, "\tПопытка входа с данными: login - %s, password - %s\n", login, pass);
         fprintf(logs, "\tАутентификация в PAM\n");
         //struct pam_conv conv = {misc_conv, NULL};
         struct pam_conv conv = {&pam_conversation, (void *) pass};
@@ -165,9 +157,11 @@ int route(char *login, char *pass) {
           fprintf(logs, "\tПользователю: %s доступ разрешён\n", login);
           if (file_exists(file_name)) {
             HTTP_200;
+            retValue = 200;
             read_file(file_name);
           } else {
             HTTP_404;
+            retValue = 404;
             sprintf(file_name, "%s%s", PUBLIC_DIR, NOT_FOUND_HTML);
             if (file_exists(file_name))
               read_file(file_name);
@@ -177,14 +171,19 @@ int route(char *login, char *pass) {
     else {
       if (file_exists(file_name)) {
         HTTP_200;
+        retValue = 200;
         read_file(file_name);
       } else {
         HTTP_404;
+        retValue = 404;
         sprintf(file_name, "%s%s", PUBLIC_DIR, NOT_FOUND_HTML);
         if (file_exists(file_name))
           read_file(file_name);
       }
     }
+
+    fclose(logs);
+
   }
 
   ROUTE_END()
